@@ -1,0 +1,3 @@
+initrd
+vendor/golang.org/
+*.tar.gz
