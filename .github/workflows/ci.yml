@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Vendor
+        run: make vendor
+
+      - name: Build
+        run: make build
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: initrd
+          path: initrd
+
+  test-bootc:
+    name: Test with Fedora bootc
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download binary
+        uses: actions/download-artifact@v4
+        with:
+          name: initrd
+
+      - name: Make binary executable
+        run: chmod +x initrd
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-system-x86 virtiofsd podman cpio kmod
+
+      - name: Pull and extract Fedora bootc container
+        run: |
+          mkdir -p rootfs
+          podman pull quay.io/fedora/fedora-bootc:42
+
+          # Create a temporary container and export its filesystem
+          container_id=$(podman create quay.io/fedora/fedora-bootc:42)
+          podman export $container_id | tar -C rootfs -xf -
+          podman rm $container_id
+
+      - name: Test VM boot
+        run: |
+          test/test_boot.sh rootfs
