@@ -208,7 +208,8 @@ func loadKernelModule(modulePath string) error {
 		return err
 	}
 
-	_, _, errno := unix.Syscall(unix.SYS_INIT_MODULE, uintptr(unsafe.Pointer(&moduleData[0])), uintptr(len(moduleData)), uintptr(unsafe.Pointer(&[]byte{0}[0])))
+	zeroData := byte(0)
+	_, _, errno := unix.Syscall(unix.SYS_INIT_MODULE, uintptr(unsafe.Pointer(&moduleData[0])), uintptr(len(moduleData)), uintptr(unsafe.Pointer(&zeroData)))
 	if errno != 0 {
 		return errno
 	}
