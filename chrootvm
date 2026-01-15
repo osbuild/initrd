@@ -79,10 +79,6 @@ if [[ "$INIT_ARG" != /* ]]; then
 else
     # Absolute path specified
     INIT="$INIT_ARG"
-    if [ ! -f "$ROOTFS$INIT" ]; then
-        echo "Error: init program '$INIT' not found in rootfs"
-        exit 1
-    fi
 fi
 
 # Find the latest kernel version from $ROOTFS/usr/lib/modules
