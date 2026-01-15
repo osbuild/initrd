@@ -222,4 +222,4 @@ for tag in "${!MOUNTS[@]}"; do
     add_virtiofs "$tag"
 done
 
-"${QEMU_ARGS[@]}"
+exec "${QEMU_ARGS[@]}"
