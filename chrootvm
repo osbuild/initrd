@@ -220,7 +220,7 @@ QEMU_ARGS=(
     -numa node,memdev=mem0
 )
 
-if [ -e /dev/kvm ]; then
+if [ -r /dev/kvm ] && [ -w /dev/kvm ] && $QEMU -accel help | grep -q kvm; then
     QEMU_ARGS+=(-enable-kvm)
 fi
 
