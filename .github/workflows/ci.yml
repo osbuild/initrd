@@ -53,10 +53,10 @@ jobs:
       - name: Pull and extract Fedora bootc container
         run: |
           mkdir -p rootfs
-          podman pull quay.io/fedora/fedora-bootc:42
+          podman pull quay.io/fedora/fedora-bootc:44
 
           # Create a temporary container and export its filesystem
-          container_id=$(podman create quay.io/fedora/fedora-bootc:42)
+          container_id=$(podman create quay.io/fedora/fedora-bootc:44)
           podman export $container_id | tar -C rootfs -xf -
           podman rm $container_id
 
