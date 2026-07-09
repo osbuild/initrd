@@ -63,3 +63,4 @@ jobs:
       - name: Test VM boot
         run: |
           test/test_boot.sh rootfs
+          test/test_cgroup2.sh rootfs
