@@ -134,6 +134,13 @@ func cmdlineGetMounts(cmdline string) []struct {
 	return mounts
 }
 
+func mountProc() error {
+	if err := unix.Mount("proc", "/proc", "proc", unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_NODEV, ""); err != nil {
+		return err
+	}
+	return nil
+}
+
 func mountAPIs() error {
 	mounts := []struct {
 		source string
@@ -144,9 +151,10 @@ func mountAPIs() error {
 	}{
 		{"sysfs", "/sys", "sysfs", unix.MS_NOSUID | unix.MS_NOEXEC | unix.MS_NODEV, ""},
 		{"devtmpfs", "/dev", "devtmpfs", unix.MS_NOSUID, "seclabel,mode=0755,size=4m"},
-		{"proc", "/proc", "proc", unix.MS_NOSUID | unix.MS_NOEXEC | unix.MS_NODEV, ""},
 		{"tmpfs", "/run", "tmpfs", unix.MS_NOSUID | unix.MS_NODEV, "seclabel,mode=0755,size=64m"},
 		{"tmpfs", "/tmp", "tmpfs", unix.MS_NOSUID | unix.MS_NODEV, "seclabel,mode=0755,size=128m"},
+		// Mount cgroup2 for Podman 6+ which requires cgroups v2
+		{"cgroup2", "/sys/fs/cgroup", "cgroup2", unix.MS_NOSUID | unix.MS_NOEXEC | unix.MS_NODEV, ""},
 	}
 
 	for _, m := range mounts {
@@ -256,11 +264,8 @@ func doInit() error {
 		}
 	}
 
-	if err := mountAPIs(); err != nil {
-		return err
-	}
-
-	if err := mkdirP("/run/mnt"); err != nil {
+	// Need this first to parse the commandline
+	if err := mountProc(); err != nil {
 		return err
 	}
 
@@ -271,6 +276,14 @@ func doInit() error {
 
 	if _, ok := cmdlineGet(cmdline, "debug"); ok {
 		setDebug(true)
+	}
+
+	if err := mountAPIs(); err != nil {
+		return err
+	}
+
+	if err := mkdirP("/run/mnt"); err != nil {
+		return err
 	}
 
 	if err := createStaticDevices(); err != nil {
@@ -300,6 +313,7 @@ func doInit() error {
 		}
 	}
 
+	// Note: /sys/fs/cgroup is moved as part of /sys
 	survivingMounts := []string{"/run", "/dev", "/proc", "/sys", "/tmp"}
 	for _, mountPoint := range survivingMounts {
 		dest := filepath.Join("/sysroot", mountPoint)

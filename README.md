@@ -17,7 +17,7 @@ directory. No other files are needed in the cpio archive.
 
 During boot, the initrd does this:
 
- * Mount various filesystems (sysfs, devtmpfs, proc, tmpfs)
+ * Mount various filesystems (sysfs, devtmpfs, proc, tmpfs, cgroup2)
  * Create files in `/dev` that can are needed
  * Load, in alphabetical order, any kernel modules in
    `/usr/lib/modules`.
@@ -49,6 +49,16 @@ These options are supported:
  * `debug` - if this is set, debug spew is printed
  * `mount=$TAG` mount the virtiofs filesystem with the given tag under `/run/mnt/$TAG`
  * `mount-ro=$TAG` mount read-only the virtiofs filesystem with the given tag under `/run/mnt/$TAG`
+
+# Cgroups v2 support
+
+The initrd mounts cgroup2 at `/sys/fs/cgroup` to support container runtimes
+that require cgroups v2. This is notably required for Podman 6+ which dropped
+support for cgroups v1.
+
+Note: This implementation requires cgroups v2 (unified hierarchy) and does not
+provide fallback support for cgroups v1. Systems running older kernels without
+cgroups v2 support are not supported.
 
 # Build and install
 
